@@ -8,11 +8,11 @@
 namespace pf {
 
 Epidemic::Epidemic(double const beta, double const gamma,
-                   Population initial_population)
-    : beta_{beta}, gamma_{gamma} {
-  assert(beta >= 0. && beta <= 1.);
-  assert(gamma >= 0. && gamma <= 1.);
-  assert(beta / gamma > 1);
+                   Population initialpopulation)
+    : beta_(beta), gamma_(gamma), initial_population_(initialpopulation) {
+  assert(beta_ >= 0. && beta_ <= 1.);
+  assert(gamma_ >= 0. && gamma_ <= 1.);
+  assert(beta_ / gamma_ > 1);
 }
 
 long int Epidemic::N() {
@@ -66,10 +66,9 @@ Population Epidemic::approx(Population population_state) {
   return population_state;
 }
 
-std::vector<Population> Epidemic::evolve(Population initial_population,
-                                         long int T) {
+std::vector<Population> Epidemic::evolve(long int T) {
   std::vector<Population> population_state_;
-  population_state_.push_back(initial_population);
+  population_state_.push_back(initial_population_);
   for (long int i = 0; i < T;) {
     if (population_state_[i].I < 0.6 * Epidemic::N()) {
       Population next_state = approx(solve(population_state_[i]));
