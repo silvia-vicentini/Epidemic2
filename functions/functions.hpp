@@ -1,5 +1,6 @@
 #ifndef EPIDEMIC_HPP
 #define EPIDEMIC_HPP
+#include <vector>
 
 namespace pf {
 
@@ -11,9 +12,9 @@ struct Population {
 
 class Epidemic {
  private:
-  double const beta_;
-  double const gamma_;
-  Population initial_population_;
+  double const m_beta;
+  double const m_gamma;
+  Population m_initial_population;
 
  public:
   Epidemic(double const, double const, Population);
