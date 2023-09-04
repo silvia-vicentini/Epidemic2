@@ -77,7 +77,7 @@ TEST_CASE("Testing the evolve function") {
     pf::Population initial_population{299, 1, 0};
     pf::Epidemic epidemic(0.99, 0.01, initial_population);
     int const T{15};
-    const auto state = epidemic.evolve(initial_population, T);
+    const auto state = epidemic.evolve(T);
     CHECK(result(state[0], {299, 1, 0}));
     CHECK(result(state[1], {298, 1, 1}));
     CHECK(result(state[2], {297, 1, 2}));
@@ -92,7 +92,7 @@ TEST_CASE("Testing the evolve function") {
     pf::Population initial_population{299, 1, 0};
     pf::Epidemic epidemic(0.99, 0.01, initial_population);
     int const T{15};
-    const auto state = epidemic.evolve(initial_population, T);
+    const auto state = epidemic.evolve(T);
     CHECK(result(state[0], {299, 1, 0}));
     CHECK(result(state[1], {298, 2, 0}));
     CHECK(result(state[2], {296, 4, 0}));
