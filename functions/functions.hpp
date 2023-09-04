@@ -25,8 +25,8 @@ class Epidemic {
   Population lockdown(Population);
 
   Population approx(Population);
-  
-  std::vector<Population> evolve(Population, long int);
+
+  std::vector<Population> evolve(long int);
 };
 }  // namespace pf
 
