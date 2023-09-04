@@ -19,8 +19,7 @@ int main() {
   int T;
   std::cin >> T;
 
-  std::vector<pf::Population> population_state_ =
-      epidemic.evolve(initial_population, T);
+  std::vector<pf::Population> population_state_ = epidemic.evolve(T);
   std::cout << "Report for each of the stored states of population:\n";
   std::cout << "Day  S    I   R \n";
   for (int i = 0; i <= T; ++i) {
