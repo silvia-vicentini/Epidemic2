@@ -1,6 +1,5 @@
 #include "functions.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <vector>
@@ -8,26 +7,30 @@
 namespace pf {
 
 Epidemic::Epidemic(double const beta, double const gamma,
-                   Population initialpopulation)
-    : beta_(beta), gamma_(gamma), initial_population_(initialpopulation) {
-  assert(beta_ >= 0. && beta_ <= 1.);
-  assert(gamma_ >= 0. && gamma_ <= 1.);
-  assert(beta_ / gamma_ > 1);
+                   Population initial_population)
+    : m_beta(beta), m_gamma(gamma), m_initial_population(initial_population) {
+  assert(m_beta >= 0. && m_beta <= 1.);
+  assert(m_gamma >= 0. && m_gamma <= 1.);
+  assert(m_beta / m_gamma > 1);
+  assert(m_initial_population.S > 0);
+  assert(m_initial_population.I > 0);
+  assert(m_initial_population.R > 0);
 }
 
 long int Epidemic::N() {
-  return initial_population_.S + initial_population_.I + initial_population_.R;
+  return m_initial_population.S + m_initial_population.I +
+         m_initial_population.R;
 }
 
 // definition of solve function
 Population Epidemic::solve(Population prev_state) {
   Population next_state;
-  next_state.S = std::round(prev_state.S - beta_ * prev_state.S * prev_state.I /
-                                               Epidemic::N());
+  next_state.S = std::round(prev_state.S - m_beta * prev_state.S *
+                                               prev_state.I / Epidemic::N());
   next_state.I = std::round(
-      prev_state.I + beta_ * prev_state.S * prev_state.I / Epidemic::N() -
-      gamma_ * prev_state.I);
-  next_state.R = std::round(prev_state.R + gamma_ * prev_state.I);
+      prev_state.I + m_beta * prev_state.S * prev_state.I / Epidemic::N() -
+      m_gamma * prev_state.I);
+  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
   return next_state;
 }
 
@@ -35,7 +38,7 @@ Population Epidemic::solve(Population prev_state) {
 Population Epidemic::lockdown(Population prev_state) {
   Population next_state;
   next_state.S = prev_state.S;
-  next_state.R = std::round(prev_state.R + gamma_ * prev_state.I);
+  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
   next_state.I = Epidemic::N() - prev_state.S - next_state.R;
   return next_state;
 }
@@ -68,7 +71,7 @@ Population Epidemic::approx(Population population_state) {
 
 std::vector<Population> Epidemic::evolve(long int T) {
   std::vector<Population> population_state_;
-  population_state_.push_back(initial_population_);
+  population_state_.push_back(m_initial_population);
   for (long int i = 0; i < T;) {
     if (population_state_[i].I < 0.6 * Epidemic::N()) {
       Population next_state = approx(solve(population_state_[i]));
