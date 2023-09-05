@@ -16,10 +16,7 @@ class Epidemic {
   double const m_gamma;
   Population m_initial_population;
 
- public:
-  Epidemic(double const, double const, Population);
-
-  long int N();
+  long int N() const;
 
   Population solve(Population);
 
@@ -27,7 +24,10 @@ class Epidemic {
 
   Population approx(Population);
 
-  std::vector<Population> evolve(long int);
+ public:
+  Epidemic(double const, double const, Population);
+
+  std::vector<Population> evolve(long int const);
 };
 }  // namespace pf
 
