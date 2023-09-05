@@ -17,7 +17,7 @@ Epidemic::Epidemic(double const beta, double const gamma,
   assert(m_initial_population.R > 0);
 }
 
-long int Epidemic::N() {
+long int Epidemic::N() const{
   return m_initial_population.S + m_initial_population.I +
          m_initial_population.R;
 }
