@@ -109,7 +109,7 @@ TEST_CASE("Testing the evolve function") {
 
 TEST_CASE("Testing the evolve function for the italian population") {
   pf::Population initial_population{59109968, 32, 0};
-  pf::Epidemic epidemic(0.186, 0.166, initial_population, 100);
+  pf::Epidemic epidemic(0.186, 0.166, initial_population, 300);
   const auto state = epidemic.evolve();
   CHECK(result(state[0], {59109968, 32, 0}));
   CHECK(result(state[50], {59109420, 97, 483}));
