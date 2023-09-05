@@ -106,3 +106,16 @@ TEST_CASE("Testing the evolve function") {
     CHECK(result(state[80], {0, 157, 143}));
   }
 }
+
+TEST_CASE("Testing the evolve function for the italian population") {
+  pf::Population initial_population{59109968, 32, 0};
+  pf::Epidemic epidemic(0.186, 0.166, initial_population, 100);
+  const auto state = epidemic.evolve();
+  CHECK(result(state[0], {59109968, 32, 0}));
+  CHECK(result(state[50], {59109420, 97, 483}));
+  CHECK(result(state[100], {59107863, 269, 1868}));
+  CHECK(result(state[150], {59103601, 731, 5668}));
+  CHECK(result(state[200], {59092043, 1981, 15976}));
+  CHECK(result(state[250], {59060942, 5314, 43744}));
+  CHECK(result(state[300], {58977938, 14134, 117928}));
+}
