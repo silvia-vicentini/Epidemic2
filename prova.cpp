@@ -1,6 +1,6 @@
 #include <vector>
 #include <cmath>
-#include <assert>
+#include <cassert>
 
 struct Population {
   long int S;
@@ -13,23 +13,95 @@ class Epidemic {
   double const m_beta;
   double const m_gamma;
   Population m_initial_population;
+  long int m_T;
 
-  long int N() const;
+  long int N() const{
+  return m_initial_population.S + m_initial_population.I +
+         m_initial_population.R;
+};
 
-  Population solve(Population);
+  Population solve(Population prev_state) {
+  Population next_state;
+  next_state.S = std::round(prev_state.S - m_beta * prev_state.S *
+                                               prev_state.I / N());
+  next_state.I = std::round(
+      prev_state.I + m_beta * prev_state.S * prev_state.I / N() -
+      m_gamma * prev_state.I);
+  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
+  return next_state;
+};
 
-  Population lockdown(Population);
+  Population lockdown(Population prev_state) {
+  Population next_state;
+  next_state.S = prev_state.S;
+  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
+  next_state.I = N() - prev_state.S - next_state.R;
+  return next_state;
+};
 
-  Population approx(Population);
+  Population approx(Population population_state) {
+  long int tot = population_state.S + population_state.I + population_state.R;
+  if (tot != N()) {
+    long int diff = tot - N();
+    if (diff > 0) {
+      population_state.R -= diff;
+    } else {
+      population_state.I -= diff;
+    }
+  }
+  return population_state;
+};
 
  public:
-  Epidemic(double const, double const, Population);
+  Epidemic(double beta, double gamma,
+                   Population initial_population, long int T)
+    : m_beta(beta), m_gamma(gamma), m_initial_population(initial_population), m_T(T) {
+  assert(m_beta >= 0. && m_beta <= 1.);
+  assert(m_gamma >= 0. && m_gamma <= 1.);
+  assert(m_beta / m_gamma > 1);
+  assert(m_initial_population.S > 0);
+  assert(m_initial_population.I > 0);
+  assert(m_initial_population.R > 0);
+  assert(m_T > 0);
+};
 
-  std::vector<Population> evolve(long int);
+std::vector<Population> evolve() {
+  std::vector<Population> population_state_;
+  population_state_.push_back(m_initial_population);
+  for (long int i = 0; i < T;) {
+    if (population_state_[i].I < 0.6 * N()) {
+      Population next_state = approx(solve(population_state_[i]));
+      population_state_.push_back(next_state);
+      ++i;
+    } else {
+      if (T - i < 14) {
+        long int b = i;
+        for (long int a = 0; a < T - i; ++a) {
+          Population next_state = lockdown(population_state_[b]);
+          population_state_.push_back(next_state);
+          ++b;
+        }
+        i = b;
+      } else {
+        for (long int a = 0; a < 14; ++a) {
+          Population next_state = lockdown(population_state_[i]);
+          population_state_.push_back(next_state);
+          ++i;
+        }
+      }
+    }
+  }
+  /*else {
+    auto next_state =
+        approx(vaccine(population_state_[i], N, beta, gamma), N);
+    population_state_.push_back(next_state);
+  }
+  }*/
+  return population_state_;
+};
 
 void graph() {
-    sf::RenderWindow window(sf::VideoMode(800, 600),
-                            "Epidemic evolution"); 
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Epidemic evolution"); 
 
     sf::RectangleShape xAxis(
         sf::Vector2f(window.getSize().x,
