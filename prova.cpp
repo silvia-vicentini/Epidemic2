@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <cassert>
+#include <iostream>
 
 struct Population {
   long int S;
@@ -10,8 +11,8 @@ struct Population {
 
 class Epidemic {
  private:
-  double const m_beta;
-  double const m_gamma;
+  double m_beta;
+  double m_gamma;
   Population m_initial_population;
   long int m_T;
 
@@ -91,24 +92,14 @@ std::vector<Population> evolve() {
       }
     }
   }
-  /*else {
-    auto next_state =
-        approx(vaccine(population_state_[i], N, beta, gamma), N);
-    population_state_.push_back(next_state);
-  }
-  }*/
   return population_state_;
 };
 
 void graph() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Epidemic evolution"); 
 
-    sf::RectangleShape xAxis(
-        sf::Vector2f(window.getSize().x,
-                     2.f));
-    xAxis.setPosition(
-        0.f, window.getSize().y /
-                 2); 
+    sf::RectangleShape xAxis(sf::Vector2f(window.getSize().x, 2.f));
+    xAxis.setPosition(0.f, window.getSize().y / 2); 
     xAxis.setFillColor(sf::Color::Black); 
 
     sf::RectangleShape yAxis(sf::Vector2f(2.f, window.getSize().y));
@@ -127,10 +118,7 @@ void graph() {
     long int maxYValue = N();
     for (float y = 0; y <= maxYValue; y += 20.f) {
       sf::Vertex line[] = {
-          sf::Vertex(
-              sf::Vector2f(graphPosition.x, graphPosition.y + graphSize.y -
-                                                (y / maxYValue) * graphSize.y),
-              sf::Color::Black),
+      sf::Vertex(sf::Vector2f(graphPosition.x, graphPosition.y + graphSize.y - (y / maxYValue) * graphSize.y), sf::Color::Black),
           sf::Vertex(sf::Vector2f(graphPosition.x + graphSize.x,
                                   graphPosition.y + graphSize.y -
                                       (y / maxYValue) * graphSize.y),
@@ -157,8 +145,7 @@ void graph() {
       tickName.setFont(font);
       tickName.setCharacterSize(14);
       tickName.setFillColor(sf::Color::Black);
-      tickName.setString(std::to_string(static_cast<int>(
-          x)));
+      tickName.setString(std::to_string(static_cast<int>(x)));
       tickName.setPosition(
           graphPosition.x + (x / maxXValue) * graphSize.x - 10,
           graphPosition.y + graphSize.y + 10);
@@ -183,7 +170,7 @@ void graph() {
     sf::VertexArray InfectedCurve(sf::LineStrip);
     sf::VertexArray RecoveryCurve(sf::LineStrip);
     std::vector<Population> population_state_ = evolve();
-    for (int i{0}; i <= m_T; ++i) {
+    for (int i = 0; i <= m_T; ++i) {
       int x = i;
       int yS = population_state_[i].S;
       int yI = population_state_[i].I;
@@ -229,3 +216,31 @@ void graph() {
     }
   };
 };
+
+int main() {
+  std::cout << "Please write initial population's groups S, I, R:\n";
+  pf::Population initial_population;
+  std::cin >> initial_population.S >> initial_population.I >>
+      initial_population.R;
+
+  std::cout << "Please write epidemic's parameter beta and gamma:\n";
+  double beta;
+  double gamma;
+  std::cin >> beta >> gamma;
+  std::cout << "Please write the duration of the epidemic T:\n";
+  int T;
+  std::cin >> T;
+  
+  pf::Epidemic epidemic(beta, gamma, initial_population, T);
+
+  std::vector<pf::Population> population_state_ = epidemic.evolve();
+  std::cout << "Report for each of the stored states of population:\n";
+  std::cout << "Day  S    I   R \n";
+  for (int i = 0; i <= T; ++i) {
+    std::cout << i << "  " << population_state_[i].S << "  "
+              << population_state_[i].I << "  " << population_state_[i].R
+              << '\n';
+  }
+
+  graphic();
+}
