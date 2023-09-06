@@ -1,51 +1,34 @@
 void graph() {
     sf::RenderWindow window(sf::VideoMode(800, 600),
-                            "Epidemic evolution");  // crea finestra grafica
+                            "Epidemic evolution"); 
 
     sf::RectangleShape xAxis(
         sf::Vector2f(window.getSize().x,
-                     2.f));  // crea asse x che ha dimensioni: lungo quanto la
-                             // lunghezza della finestra e alto due unità
+                     2.f));
     xAxis.setPosition(
         0.f, window.getSize().y /
-                 2);  // imposta posizione dell'asse x. posizionato all'inizio
-                      // della finestra e a metà altezza della finestra
-    xAxis.setFillColor(sf::Color::Black);  // asse x di colore nero
+                 2); 
+    xAxis.setFillColor(sf::Color::Black); 
 
     sf::RectangleShape yAxis(sf::Vector2f(2.f, window.getSize().y));
     yAxis.setPosition(window.getSize().x / 2, 0.f);
     yAxis.setFillColor(sf::Color::Black);
 
     sf::Font font;
-    // if (!font.loadFromFile("arial.ttf")) { std::cerr << "Impossible to load
-    // font" << std::endl;  }
-    // questo serve per il font con cui voglio fare scritte, è necessario?, è
-    // giusto?
     sf::Text xAxisName("Days", font, 20);
     sf::Text yAxisName("Number of people", font, 20);
-    xAxisName.setPosition(
-        window.getSize().x - 100,
-        window.getSize().y - 40);  // non ho la minima idea di dove lo abbia
-                                   // posizionato,controlla!!!
-    yAxisName.setPosition(
-        20,
-        20)  // non ho la minima idea di dove lo abbia posizionato,controlla!!!
+    xAxisName.setPosition(window.getSize().x - 100, window.getSize().y - 40);
+    yAxisName.setPosition(20, 20);
 
-        sf::Vector2f graphSize(600.f, 400.f);  // i valori sono a caso
-    sf::Vector2f graphPosition(
-        100.f,
-        100.f);  // i valori sono a caso. Definizione delle
-                 // dimesioni e posizioni del grafico.
-    long int maxXValue =
-        m_T + 1;  // stabilisci quale è il valore max sull'asse delle x
-    long int maxYValue =
-        N();  // stabilisci quale è il valore max sull'asse delle y
-    for (float y = 0; y <= maxYValue; y += 20.f)  // il valore 20.f è a caso
-    {
+        sf::Vector2f graphSize(600.f, 400.f);
+    sf::Vector2f graphPosition(100.f, 100.f); 
+    long int maxXValue = m_T + 1;
+    long int maxYValue = N();
+    for (float y = 0; y <= maxYValue; y += 20.f) {
       sf::Vertex line[] = {
           sf::Vertex(
               sf::Vector2f(graphPosition.x, graphPosition.y + graphSize.y -
-                                                (y / maxYvalue) * graphSize.y),
+                                                (y / maxYValue) * graphSize.y),
               sf::Color::Black),
           sf::Vertex(sf::Vector2f(graphPosition.x + graphSize.x,
                                   graphPosition.y + graphSize.y -
@@ -53,8 +36,7 @@ void graph() {
                      sf::Color::Black)};
       window.draw(line, 2, sf::Lines);
     }
-    for (float x = 0; x <= maxXValue; x += 2.f)  // il valore 2.f è a caso
-    {
+    for (float x = 0; x <= maxXValue; x += 2.f) {
       sf::Vertex line[] = {
           sf::Vertex(
               sf::Vector2f(graphPosition.x + (x / maxXValue) * graphSize.x,
@@ -67,54 +49,40 @@ void graph() {
       window.draw(line, 2, sf::Lines);
     }
 
-    std::vector<sf::Text>
-        xTicks;  // creazione degli oggetti di testo per le tacchette sugli assi
+    std::vector<sf::Text> xTicks;
     std::vector<sf::Text> yTicks;
     for (float x = 0.f; x <= maxXValue; x += 2.f) {
-      sf::Text tickName;  // o devo mettere sf::text tickLabel ???
+      sf::Text tickName;
       tickName.setFont(font);
       tickName.setCharacterSize(14);
       tickName.setFillColor(sf::Color::Black);
       tickName.setString(std::to_string(static_cast<int>(
-          x)));  // qui viene impostato il contenuto del testo dell'oggetto
-                 // tickName CON IL VALORE numerico DI X.std::to_string converte
-                 // il valore numerico in una stringa. static_cast<int> ci
-                 // assicura che il valore di y venga convertito in un intero
-                 // prima di essere convertito in stringa.
+          x)));
       tickName.setPosition(
           graphPosition.x + (x / maxXValue) * graphSize.x - 10,
-          graphPosition.y + graphSize.y + 10);  // valori a caso
-      xTicks.push_back(
-          tickName);  // l'oggeto tickName viene aggiunto al vettore
-                      // xTicks che conterrà tutte le etichette delle
-                      // tacchette lungo l'asse delle x
+          graphPosition.y + graphSize.y + 10);
+      xTicks.push_back(tickName); 
     }
     for (float y = 0.f; y <= maxXValue; y += 20.f) {
-      sf::Text tickName;  // o devo mettere sf::text tickLabel ???
+      sf::Text tickName;
       tickName.setFont(font);
       tickName.setCharacterSize(14);
       tickName.setFillColor(sf::Color::Black);
       tickName.setString(std::to_string(static_cast<int>(
-          y)));  // qui viene impostato il contenuto del testo dell'oggetto
-                 // tickName CON IL VALORE numerico DI Y.std::to_string converte
-                 // il valore numerico in una stringa. static_cast<int> ci
-                 // assicura che il valore di y venga convertito in un intero
-                 // prima di essere convertito in stringa.
+          y)));
       tickName.setPosition(graphPosition.x - 30,
                            graphPosition.y + graphSize.y -
                                (y / maxYValue) * graphSize.y -
-                               7);  // valori a caso
+                               7); 
       yTicks.push_back(
-          tickName);  // l'oggeto tickName viene aggiunto al vettore
-                      // xTicks che conterrà tutte le etichette delle
-                      // tacchette lungo l'asse delle x
+          tickName);
     }
 
     sf::VertexArray SusceptibleCurve(sf::LineStrip);  // creo le curve
-    sf::VertexArray InfectionCurve(sf::LineStrip);
+    sf::VertexArray InfectedCurve(sf::LineStrip);
     sf::VertexArray RecoveryCurve(sf::LineStrip);
     std::vector<Population> population_state_ = evolve();
-    for (int i{0}; i <= day; ++i) {
+    for (int i{0}; i <= m_T; ++i) {
       int x = i;
       int yS = population_state_[i].S;
       int yI = population_state_[i].I;
@@ -134,9 +102,6 @@ void graph() {
               graphPosition.x + (x / maxXValue) * graphSize.x,
               graphPosition.y + graphSize.y - (yR / maxYValue) * graphSize.y),
           sf::Color::Green));
-      // crea un oggetto sf::Vertex che rappresenta un punto. con sf::Vector
-      // calcolo le cordinate del punto (dove x e y sono quelli correnti nel
-      // ciclo)
     }
 
     while (window.isOpen()) {
@@ -150,13 +115,11 @@ void graph() {
       window.draw(yAxis);
       window.draw(xAxisName);
       window.draw(yAxisName);
-      for (const sf::Text& tick : xTicks) {
-        window.draw(tick);
-      }  // ciclo range-based . Serve per disegnare l'oggetto tick (corrente)
-         // sulla finestra. Tutte le etichette vengono disegnate una dopo
-         // l'altra seguendo l'ordine in cui sono nel vettore xTicks.
-      for (const sf::Text& tick : yTicks) {
-        window.draw(tick);
+      for (auto tick = xTicks.begin(), last = xTick.end(); tick != last; ++tick) {
+        window.draw(*tick);
+      }
+      for (auto tick = yTicks.begin(), last = yTick.end(); tick != last; ++tick) {
+        window.draw(*tick);
       }
       window.draw(SusceptibleCurve);
       window.draw(InfectedCurve);
