@@ -12,9 +12,10 @@ struct Population {
 
 class Epidemic {
  private:
-  double const m_beta;
-  double const m_gamma;
+  double m_beta;
+  double m_gamma;
   Population m_initial_population;
+  long int m_T;
 
   long int N() const;
 
@@ -25,9 +26,9 @@ class Epidemic {
   Population approx(Population);
 
  public:
-  Epidemic(double const, double const, Population);
+  Epidemic(double, double, Population, long int);
 
-  std::vector<Population> evolve(long int const);
+  std::vector<Population> evolve();
 };
 }  // namespace pf
 
