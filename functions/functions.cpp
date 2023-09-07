@@ -6,15 +6,16 @@
 
 namespace pf {
 
-Epidemic::Epidemic(double const beta, double const gamma,
-                   Population initial_population)
-    : m_beta(beta), m_gamma(gamma), m_initial_population(initial_population) {
+Epidemic::Epidemic(double beta, double gamma,
+                   Population initial_population, long int T)
+    : m_beta(beta), m_gamma(gamma), m_initial_population(initial_population), m_T(T) {
   assert(m_beta >= 0. && m_beta <= 1.);
   assert(m_gamma >= 0. && m_gamma <= 1.);
   assert(m_beta / m_gamma > 1);
-  assert(m_initial_population.S > 0);
-  assert(m_initial_population.I > 0);
-  assert(m_initial_population.R > 0);
+  assert(m_initial_population.S >= 0);
+  assert(m_initial_population.I >= 0);
+  assert(m_initial_population.R >= 0);
+  assert(m_T > 0);
 }
 
 long int Epidemic::N() const{
@@ -69,18 +70,18 @@ Population Epidemic::approx(Population population_state) {
   return population_state;
 }
 
-std::vector<Population> Epidemic::evolve(long int T) {
+std::vector<Population> Epidemic::evolve() {
   std::vector<Population> population_state_;
   population_state_.push_back(m_initial_population);
-  for (long int i = 0; i < T;) {
+  for (long int i = 0; i < m_T;) {
     if (population_state_[i].I < 0.6 * Epidemic::N()) {
       Population next_state = approx(solve(population_state_[i]));
       population_state_.push_back(next_state);
       ++i;
     } else {
-      if (T - i < 14) {
+      if (m_T - i < 14) {
         long int b = i;
-        for (long int a = 0; a < T - i; ++a) {
+        for (long int a = 0; a < m_T - i; ++a) {
           Population next_state = lockdown(population_state_[b]);
           population_state_.push_back(next_state);
           ++b;
