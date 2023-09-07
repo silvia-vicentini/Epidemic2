@@ -12,13 +12,14 @@ int main() {
   double beta;
   double gamma;
   std::cin >> beta >> gamma;
-  pf::Epidemic epidemic(beta, gamma, initial_population);
 
   std::cout << "Please write the duration of the epidemic T:\n";
   int T;
   std::cin >> T;
 
-  std::vector<pf::Population> population_state_ = epidemic.evolve(T);
+  pf::Epidemic epidemic{beta, gamma, initial_population, T};
+
+  std::vector<pf::Population> population_state_ = epidemic.evolve();
   std::cout << "Report for each of the stored states of population:\n";
   std::cout << "Day  S    I   R \n";
   for (int i = 0; i <= T; ++i) {
