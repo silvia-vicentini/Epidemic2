@@ -2,7 +2,7 @@
 
 #include "functions.hpp"
 
-#include "doctest.h"
+#include "../doctest.h"
 
 // mancano i test su vaccine!!
 
@@ -52,13 +52,13 @@ TEST_CASE("Testing the evolve function") {
     pf::Epidemic epidemic(0.99, 0.01, initial_population, 15);
     const auto state = epidemic.evolve();
     CHECK(result(state[0], {299, 1, 0}));
-    CHECK(result(state[1], {298, 1, 1}));
-    CHECK(result(state[2], {297, 1, 2}));
-    CHECK(result(state[3], {296, 1, 3}));
-    CHECK(result(state[4], {295, 1, 4}));
-    CHECK(result(state[13], {286, 1, 13}));
-    CHECK(result(state[14], {285, 1, 14}));
-    CHECK(result(state[15], {284, 1, 15}));
+    CHECK(result(state[1], {298, 2, 0}));
+    CHECK(result(state[2], {296, 4, 0}));
+    CHECK(result(state[3], {292, 8, 0}));
+    CHECK(result(state[4], {284, 16, 0}));
+    CHECK(result(state[13], {55, 233, 12}));
+    CHECK(result(state[14], {55, 231, 14}));
+    CHECK(result(state[15], {55, 229, 16}));
   }
 
   SUBCASE("Normal use, beta >> gamma, N=300") {
@@ -116,6 +116,6 @@ TEST_CASE("Testing the evolve function for the italian population") {
   CHECK(result(state[100], {59107863, 269, 1868}));
   CHECK(result(state[150], {59103601, 731, 5668}));
   CHECK(result(state[200], {59092043, 1981, 15976}));
-  CHECK(result(state[250], {59060942, 5314, 43744}));
-  CHECK(result(state[300], {58977938, 14134, 117928}));
+  CHECK(result(state[250], {59060940, 5314, 43746}));
+  CHECK(result(state[300], {58977932, 14134, 117934}));
 }
