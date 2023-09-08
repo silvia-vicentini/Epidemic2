@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 struct Population {
   long int S;
@@ -153,7 +154,6 @@ class Epidemic {
 
     // righe verticali della griglia
     // devi cambiare vertical con orizontal!!
-    // valutare i colori, ti piacciono?
     std::vector<sf::VertexArray> OrizontalLines;
     for (int i = 1; i < 8; ++i) {
       sf::VertexArray OrizontalLine(sf::Lines, 2);
@@ -162,8 +162,8 @@ class Epidemic {
                        window.getSize().y - 80.f);
       OrizontalLine[1].position =
           sf::Vector2f(80.f + (window.getSize().x - 160.f) * i / 8, 80.f);
-      OrizontalLine[0].color = sf::Color::Cyan;
-      OrizontalLine[1].color = sf::Color::Cyan;
+      OrizontalLine[0].color = sf::Color(175,238,238);
+      OrizontalLine[1].color = sf::Color(175,238,238);
       OrizontalLines.push_back(OrizontalLine);
     }
 
@@ -176,8 +176,8 @@ class Epidemic {
       VerticalLine[1].position =
           sf::Vector2f(window.getSize().x - 80.f,
                        80.f + (window.getSize().y - 160.f) * i / 6);
-      VerticalLine[0].color = sf::Color::Cyan;
-      VerticalLine[1].color = sf::Color::Cyan;
+      VerticalLine[0].color = sf::Color(175,238,238);
+      VerticalLine[1].color = sf::Color(175,238,238);
       VerticalLines.push_back(VerticalLine);
     }
 
@@ -188,6 +188,9 @@ class Epidemic {
     std::vector<sf::VertexArray> Susceptible;
     std::vector<sf::VertexArray> Infected;
     std::vector<sf::VertexArray> Recovery;
+    std::vector<sf::CircleShape> S_dots;
+    std::vector<sf::CircleShape> I_dots;
+    std::vector<sf::CircleShape> R_dots;
     float xscale = (window.getSize().x - 160.f) / maxXValue;
     float yscale = (window.getSize().y - 160.f) / maxYValue;
     for (int i = 0; i <= m_T; ++i) {
@@ -212,15 +215,33 @@ class Epidemic {
       RecoveryCurve[1].position = sf::Vector2f(
           80.f + xscale * (i + 1),
           -80.f + window.getSize().y - yscale * population_state_[i + 1].R);
-      SusceptibleCurve[0].color = sf::Color::Blue;
-      SusceptibleCurve[1].color = sf::Color::Blue;
-      InfectedCurve[0].color = sf::Color::Red;
-      InfectedCurve[1].color = sf::Color::Red;
-      RecoveryCurve[0].color = sf::Color::Green;
-      RecoveryCurve[1].color = sf::Color::Green;
+      SusceptibleCurve[0].color = sf::Color(0,0,255);
+      SusceptibleCurve[1].color = sf::Color(0,0,255);
+      InfectedCurve[0].color = sf::Color(230,0,0);
+      InfectedCurve[1].color = sf::Color(230,0,0);
+      RecoveryCurve[0].color = sf::Color(20,230,0);
+      RecoveryCurve[1].color = sf::Color(20,230,0);
       Susceptible.push_back(SusceptibleCurve);
       Infected.push_back(InfectedCurve);
       Recovery.push_back(RecoveryCurve);
+      sf::CircleShape Sdots(4.f);
+      sf::CircleShape Idots(4.f);
+      sf::CircleShape Rdots(4.f);
+      Sdots.setFillColor(sf::Color(0,0,255));
+Idots.setFillColor(sf::Color(230,0,0));
+Rdots.setFillColor(sf::Color(20,230,0));
+Sdots.setPosition(sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].S - 2));
+Idots.setPosition(sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].I-2));
+Rdots.setPosition(sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].R-2));
+S_dots.push_back(Sdots);
+I_dots.push_back(Idots);
+R_dots.push_back(Rdots);
     }
 
     // numeri sull'asse x
@@ -274,6 +295,15 @@ class Epidemic {
       for (const sf::VertexArray& RecoveryCurve : Recovery) {
         window.draw(RecoveryCurve);
       }
+      for (const sf::CircleShape& Sdots : S_dots) {
+        window.draw(Sdots);
+      }
+      for (const sf::CircleShape& Idots : I_dots) {
+        window.draw(Idots);
+      }
+      for (const sf::CircleShape& Rdots : R_dots) {
+        window.draw(Rdots);
+      }
       for (const sf::Text& xnumber : days) {
         window.draw(xnumber);
       }
@@ -286,8 +316,8 @@ class Epidemic {
 };
 
 int main() {
-  Population initial_population{997, 3, 0};
-  Epidemic epidemic{0.8, 0.4, initial_population, 80};
+  Population initial_population{538, 3, 0};
+  Epidemic epidemic{0.67, 0.12, initial_population, 30};
 
   /*
       std::cout << "Please write initial population's groups S, I, R:\n";
@@ -307,4 +337,5 @@ int main() {
       Epidemic epidemic{beta, gamma, initial_population, T};*/
 
   epidemic.graph();
+  std::exit(EXIT_SUCCESS);
 }
