@@ -1,7 +1,9 @@
-#include <vector>
-#include <cmath>
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <cassert>
+#include <cmath>
 #include <iostream>
+#include <vector>
 
 struct Population {
   long int S;
@@ -16,180 +18,231 @@ class Epidemic {
   Population m_initial_population;
   long int m_T;
 
-  long int N() const{
-  return m_initial_population.S + m_initial_population.I +
-         m_initial_population.R;
-};
+  long int N() const {
+    return m_initial_population.S + m_initial_population.I +
+           m_initial_population.R;
+  };
 
   Population solve(Population prev_state) {
-  Population next_state;
-  next_state.S = std::round(prev_state.S - m_beta * prev_state.S *
-                                               prev_state.I / N());
-  next_state.I = std::round(
-      prev_state.I + m_beta * prev_state.S * prev_state.I / N() -
-      m_gamma * prev_state.I);
-  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
-  return next_state;
-};
+    Population next_state;
+    next_state.S =
+        std::round(prev_state.S - m_beta * prev_state.S * prev_state.I / N());
+    next_state.I =
+        std::round(prev_state.I + m_beta * prev_state.S * prev_state.I / N() -
+                   m_gamma * prev_state.I);
+    next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
+    return next_state;
+  };
 
   Population lockdown(Population prev_state) {
-  Population next_state;
-  next_state.S = prev_state.S;
-  next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
-  next_state.I = N() - prev_state.S - next_state.R;
-  return next_state;
-};
+    Population next_state;
+    next_state.S = prev_state.S;
+    next_state.R = std::round(prev_state.R + m_gamma * prev_state.I);
+    next_state.I = N() - prev_state.S - next_state.R;
+    return next_state;
+  };
 
   Population approx(Population population_state) {
-  long int tot = population_state.S + population_state.I + population_state.R;
-  if (tot != N()) {
-    long int diff = tot - N();
-    if (diff > 0) {
-      population_state.R -= diff;
-    } else {
-      population_state.I -= diff;
+    long int tot = population_state.S + population_state.I + population_state.R;
+    if (tot != N()) {
+      long int diff = tot - N();
+      if (diff > 0) {
+        population_state.R -= diff;
+      } else {
+        population_state.I -= diff;
+      }
     }
-  }
-  return population_state;
-};
+    return population_state;
+  };
 
  public:
-  Epidemic(double beta, double gamma,
-                   Population initial_population, long int T)
-    : m_beta(beta), m_gamma(gamma), m_initial_population(initial_population), m_T(T) {
-  assert(m_beta >= 0. && m_beta <= 1.);
-  assert(m_gamma >= 0. && m_gamma <= 1.);
-  assert(m_beta / m_gamma > 1);
-  assert(m_initial_population.S > 0);
-  assert(m_initial_population.I > 0);
-  assert(m_initial_population.R > 0);
-  assert(m_T > 0);
-};
+  Epidemic(double beta, double gamma, Population initial_population, long int T)
+      : m_beta(beta),
+        m_gamma(gamma),
+        m_initial_population(initial_population),
+        m_T(T) {
+    assert(m_beta >= 0. && m_beta <= 1.);
+    assert(m_gamma >= 0. && m_gamma <= 1.);
+    assert(m_beta / m_gamma > 1);
+    assert(m_initial_population.S >= 0);
+    assert(m_initial_population.I >= 0);
+    assert(m_initial_population.R >= 0);
+    assert(m_T > 0);
+  };
 
-std::vector<Population> evolve() {
-  std::vector<Population> population_state_;
-  population_state_.push_back(m_initial_population);
-  for (long int i = 0; i < T;) {
-    if (population_state_[i].I < 0.6 * N()) {
-      Population next_state = approx(solve(population_state_[i]));
-      population_state_.push_back(next_state);
-      ++i;
-    } else {
-      if (T - i < 14) {
-        long int b = i;
-        for (long int a = 0; a < T - i; ++a) {
-          Population next_state = lockdown(population_state_[b]);
-          population_state_.push_back(next_state);
-          ++b;
-        }
-        i = b;
+  std::vector<Population> evolve() {
+    std::vector<Population> population_state_;
+    population_state_.push_back(m_initial_population);
+    for (long int i = 0; i < m_T;) {
+      if (population_state_[i].I < 0.6 * N()) {
+        Population next_state = approx(solve(population_state_[i]));
+        population_state_.push_back(next_state);
+        ++i;
       } else {
-        for (long int a = 0; a < 14; ++a) {
-          Population next_state = lockdown(population_state_[i]);
-          population_state_.push_back(next_state);
-          ++i;
+        if (m_T - i < 14) {
+          long int b = i;
+          for (long int a = 0; a < m_T - i; ++a) {
+            Population next_state = lockdown(population_state_[b]);
+            population_state_.push_back(next_state);
+            ++b;
+          }
+          i = b;
+        } else {
+          for (long int a = 0; a < 14; ++a) {
+            Population next_state = lockdown(population_state_[i]);
+            population_state_.push_back(next_state);
+            ++i;
+          }
         }
       }
     }
-  }
-  return population_state_;
-};
+    return population_state_;
+  };
 
-void graph() {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Epidemic evolution"); 
+  void graph() {
+    // finestra su cui si stampa tutto
+    sf::RenderWindow window(sf::VideoMode(1000, 600), "");
 
-    sf::RectangleShape xAxis(sf::Vector2f(window.getSize().x, 2.f));
-    xAxis.setPosition(0.f, window.getSize().y / 2); 
-    xAxis.setFillColor(sf::Color::Black); 
-
-    sf::RectangleShape yAxis(sf::Vector2f(2.f, window.getSize().y));
-    yAxis.setPosition(window.getSize().x / 2, 0.f);
-    yAxis.setFillColor(sf::Color::Black);
-
+    // titolo al centro
     sf::Font font;
-    sf::Text xAxisName("Days", font, 20);
-    sf::Text yAxisName("Number of people", font, 20);
-    xAxisName.setPosition(window.getSize().x - 100, window.getSize().y - 40);
-    yAxisName.setPosition(20, 20);
+    font.loadFromFile("Arialn.ttf");
+    sf::Text Title("Epidemic Evolution", font, 25);
+    Title.setFillColor(sf::Color::Black);
+    Title.setPosition((window.getSize().x - 160) / 2, 30.f);
 
-        sf::Vector2f graphSize(600.f, 400.f);
-    sf::Vector2f graphPosition(100.f, 100.f); 
+    // lato in basso esterno della griglia
+    sf::VertexArray xAxis(sf::Lines, 2);
+    xAxis[0].position = sf::Vector2f(80.f, window.getSize().y - 80.f);
+    xAxis[1].position =
+        sf::Vector2f(window.getSize().x - 80.f, window.getSize().y - 80.f);
+    xAxis[0].color = sf::Color::Black;
+    xAxis[1].color = sf::Color::Black;
+
+    // lato a sinistra esterno della griglia
+    sf::VertexArray yAxis(sf::Lines, 2);
+    yAxis[0].position = sf::Vector2f(80.f, window.getSize().y - 79.f);
+    yAxis[1].position = sf::Vector2f(80.f, 80.f);
+    yAxis[0].color = sf::Color::Black;
+    yAxis[1].color = sf::Color::Black;
+
+    // lato in alto esterno della griglia
+    sf::VertexArray Top(sf::Lines, 2);
+    Top[0].position = sf::Vector2f(80.f, 80.f);
+    Top[1].position = sf::Vector2f(window.getSize().x - 80.f, 80.f);
+    Top[0].color = sf::Color::Black;
+    Top[1].color = sf::Color::Black;
+
+    // lato esterno a destra della griglia
+    sf::VertexArray Right(sf::Lines, 2);
+    Right[0].position =
+        sf::Vector2f(window.getSize().x - 80.f, window.getSize().y - 80.f);
+    Right[1].position = sf::Vector2f(window.getSize().x - 80.f, 80.f);
+    Right[0].color = sf::Color::Black;
+    Right[1].color = sf::Color::Black;
+
+    // titolo asse x
+    sf::Text xAxisName("Days", font, 20);
+    xAxisName.setFillColor(sf::Color::Black);
+    xAxisName.setPosition(window.getSize().x - 150, window.getSize().y - 40);
+
+    // titolo asse y
+    sf::Text yAxisName("Number of people", font, 20);
+    yAxisName.setFillColor(sf::Color::Black);
+    yAxisName.setPosition(15, 230);
+    yAxisName.setRotation(-90.f);
+
+    // righe verticali della griglia
+    // devi cambiare vertical con orizontal!!
+    // valutare i colori, ti piacciono?
+    std::vector<sf::VertexArray> OrizontalLines;
+    for (int i = 1; i < 8; ++i) {
+      sf::VertexArray OrizontalLine(sf::Lines, 2);
+      OrizontalLine[0].position =
+          sf::Vector2f(80.f + (window.getSize().x - 160.f) * i / 8,
+                       window.getSize().y - 80.f);
+      OrizontalLine[1].position =
+          sf::Vector2f(80.f + (window.getSize().x - 160.f) * i / 8, 80.f);
+      OrizontalLine[0].color = sf::Color::Cyan;
+      OrizontalLine[1].color = sf::Color::Cyan;
+      OrizontalLines.push_back(OrizontalLine);
+    }
+
+    // righe orizzontali della griglia
+    std::vector<sf::VertexArray> VerticalLines;
+    for (int i = 1; i < 6; ++i) {
+      sf::VertexArray VerticalLine(sf::Lines, 2);
+      VerticalLine[0].position =
+          sf::Vector2f(80.f, 80.f + (window.getSize().y - 160.f) * i / 6);
+      VerticalLine[1].position =
+          sf::Vector2f(window.getSize().x - 80.f,
+                       80.f + (window.getSize().y - 160.f) * i / 6);
+      VerticalLine[0].color = sf::Color::Cyan;
+      VerticalLine[1].color = sf::Color::Cyan;
+      VerticalLines.push_back(VerticalLine);
+    }
+
+    // Curve --> sono giuste: non toccarle!
     long int maxXValue = m_T + 1;
     long int maxYValue = N();
-    for (float y = 0; y <= maxYValue; y += 20.f) {
-      sf::Vertex line[] = {
-      sf::Vertex(sf::Vector2f(graphPosition.x, graphPosition.y + graphSize.y - (y / maxYValue) * graphSize.y), sf::Color::Black),
-          sf::Vertex(sf::Vector2f(graphPosition.x + graphSize.x,
-                                  graphPosition.y + graphSize.y -
-                                      (y / maxYValue) * graphSize.y),
-                     sf::Color::Black)};
-      window.draw(line, 2, sf::Lines);
-    }
-    for (float x = 0; x <= maxXValue; x += 2.f) {
-      sf::Vertex line[] = {
-          sf::Vertex(
-              sf::Vector2f(graphPosition.x + (x / maxXValue) * graphSize.x,
-                           graphPosition.y + graphSize.y),
-              sf::Color::Black),
-          sf::Vertex(
-              sf::Vector2f(graphPosition.x + (x / maxXValue) * graphSize.x,
-                           graphPosition.y),
-              sf::Color::Black)};
-      window.draw(line, 2, sf::Lines);
-    }
-
-    std::vector<sf::Text> xTicks;
-    std::vector<sf::Text> yTicks;
-    for (float x = 0.f; x <= maxXValue; x += 2.f) {
-      sf::Text tickName;
-      tickName.setFont(font);
-      tickName.setCharacterSize(14);
-      tickName.setFillColor(sf::Color::Black);
-      tickName.setString(std::to_string(static_cast<int>(x)));
-      tickName.setPosition(
-          graphPosition.x + (x / maxXValue) * graphSize.x - 10,
-          graphPosition.y + graphSize.y + 10);
-      xTicks.push_back(tickName); 
-    }
-    for (float y = 0.f; y <= maxXValue; y += 20.f) {
-      sf::Text tickName;
-      tickName.setFont(font);
-      tickName.setCharacterSize(14);
-      tickName.setFillColor(sf::Color::Black);
-      tickName.setString(std::to_string(static_cast<int>(
-          y)));
-      tickName.setPosition(graphPosition.x - 30,
-                           graphPosition.y + graphSize.y -
-                               (y / maxYValue) * graphSize.y -
-                               7); 
-      yTicks.push_back(
-          tickName);
-    }
-
-    sf::VertexArray SusceptibleCurve(sf::LineStrip);  // creo le curve
-    sf::VertexArray InfectedCurve(sf::LineStrip);
-    sf::VertexArray RecoveryCurve(sf::LineStrip);
     std::vector<Population> population_state_ = evolve();
+    std::vector<sf::VertexArray> Susceptible;
+    std::vector<sf::VertexArray> Infected;
+    std::vector<sf::VertexArray> Recovery;
+    float xscale = (window.getSize().x - 160.f) / maxXValue;
+    float yscale = (window.getSize().y - 160.f) / maxYValue;
     for (int i = 0; i <= m_T; ++i) {
-      int x = i;
-      int yS = population_state_[i].S;
-      int yI = population_state_[i].I;
-      int yR = population_state_[i].R;
-      SusceptibleCurve.append(sf::Vertex(
-          sf::Vector2f(
-              graphPosition.x + (x / maxXValue) * graphSize.x,
-              graphPosition.y + graphSize.y - (yS / maxYValue) * graphSize.y),
-          sf::Color::Blue));
-      InfectedCurve.append(sf::Vertex(
-          sf::Vector2f(
-              graphPosition.x + (x / maxXValue) * graphSize.x,
-              graphPosition.y + graphSize.y - (yI / maxYValue) * graphSize.y),
-          sf::Color::Red));
-      RecoveryCurve.append(sf::Vertex(
-          sf::Vector2f(
-              graphPosition.x + (x / maxXValue) * graphSize.x,
-              graphPosition.y + graphSize.y - (yR / maxYValue) * graphSize.y),
-          sf::Color::Green));
+      sf::VertexArray SusceptibleCurve(sf::Lines, 2);
+      sf::VertexArray InfectedCurve(sf::Lines, 2);
+      sf::VertexArray RecoveryCurve(sf::Lines, 2);
+      SusceptibleCurve[0].position =
+          sf::Vector2f(80.f + xscale * i, -80.f + window.getSize().y -
+                                              yscale * population_state_[i].S);
+      SusceptibleCurve[1].position = sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].S);
+      InfectedCurve[0].position =
+          sf::Vector2f(80.f + xscale * i, -80.f + window.getSize().y -
+                                              yscale * population_state_[i].I);
+      InfectedCurve[1].position = sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].I);
+      RecoveryCurve[0].position =
+          sf::Vector2f(80.f + xscale * i, -80.f + window.getSize().y -
+                                              yscale * population_state_[i].R);
+      RecoveryCurve[1].position = sf::Vector2f(
+          80.f + xscale * (i + 1),
+          -80.f + window.getSize().y - yscale * population_state_[i + 1].R);
+      SusceptibleCurve[0].color = sf::Color::Blue;
+      SusceptibleCurve[1].color = sf::Color::Blue;
+      InfectedCurve[0].color = sf::Color::Red;
+      InfectedCurve[1].color = sf::Color::Red;
+      RecoveryCurve[0].color = sf::Color::Green;
+      RecoveryCurve[1].color = sf::Color::Green;
+      Susceptible.push_back(SusceptibleCurve);
+      Infected.push_back(InfectedCurve);
+      Recovery.push_back(RecoveryCurve);
+    }
+
+    // numeri sull'asse x
+    std::vector<sf::Text> days;
+    for (int i = 0; i <= 8; ++i) {
+      std::string xstring = std::to_string(m_T * i / 8);
+      sf::Text xnumber(xstring, font, 20);
+      xnumber.setFillColor(sf::Color::Black);
+      xnumber.setPosition(80.f + (window.getSize().x - 160.f) * i / 8,
+                          window.getSize().y - 70);
+      days.push_back(xnumber);
+    }
+
+    // numeri sull'asse y
+    std::vector<sf::Text> people;
+    for (int i = 0; i <= 6; ++i) {
+      std::string ystring = std::to_string(N() * i / 6);
+      sf::Text ynumber(ystring, font, 20);
+      ynumber.setFillColor(sf::Color::Black);
+      ynumber.setPosition(50.f, (window.getSize().y - 90.f) -
+                                    (window.getSize().y - 160.f) * i / 6);
+      people.push_back(ynumber);
     }
 
     while (window.isOpen()) {
@@ -199,48 +252,59 @@ void graph() {
       }
       window.clear(sf::Color::White);
 
+      window.draw(Title);
       window.draw(xAxis);
       window.draw(yAxis);
+      window.draw(Top);
+      window.draw(Right);
       window.draw(xAxisName);
       window.draw(yAxisName);
-      for (auto tick = xTicks.begin(), last = xTick.end(); tick != last; ++tick) {
-        window.draw(*tick);
+      for (const sf::VertexArray& OrizontalLine : OrizontalLines) {
+        window.draw(OrizontalLine);
       }
-      for (auto tick = yTicks.begin(), last = yTick.end(); tick != last; ++tick) {
-        window.draw(*tick);
+      for (const sf::VertexArray& VerticalLine : VerticalLines) {
+        window.draw(VerticalLine);
       }
-      window.draw(SusceptibleCurve);
-      window.draw(InfectedCurve);
-      window.draw(RecoveryCurve);
+      for (const sf::VertexArray& SusceptibleCurve : Susceptible) {
+        window.draw(SusceptibleCurve);
+      }
+      for (const sf::VertexArray& InfectedCurve : Infected) {
+        window.draw(InfectedCurve);
+      }
+      for (const sf::VertexArray& RecoveryCurve : Recovery) {
+        window.draw(RecoveryCurve);
+      }
+      for (const sf::Text& xnumber : days) {
+        window.draw(xnumber);
+      }
+      for (const sf::Text& ynumber : people) {
+        window.draw(ynumber);
+      }
       window.display();
     }
   };
 };
 
 int main() {
-  std::cout << "Please write initial population's groups S, I, R:\n";
-  pf::Population initial_population;
-  std::cin >> initial_population.S >> initial_population.I >>
-      initial_population.R;
+  Population initial_population{997, 3, 0};
+  Epidemic epidemic{0.8, 0.4, initial_population, 80};
 
-  std::cout << "Please write epidemic's parameter beta and gamma:\n";
-  double beta;
-  double gamma;
-  std::cin >> beta >> gamma;
-  std::cout << "Please write the duration of the epidemic T:\n";
-  int T;
-  std::cin >> T;
-  
-  pf::Epidemic epidemic(beta, gamma, initial_population, T);
+  /*
+      std::cout << "Please write initial population's groups S, I, R:\n";
+      Population initial_population;
+      std::cin >> initial_population.S >> initial_population.I >>
+          initial_population.R;
 
-  std::vector<pf::Population> population_state_ = epidemic.evolve();
-  std::cout << "Report for each of the stored states of population:\n";
-  std::cout << "Day  S    I   R \n";
-  for (int i = 0; i <= T; ++i) {
-    std::cout << i << "  " << population_state_[i].S << "  "
-              << population_state_[i].I << "  " << population_state_[i].R
-              << '\n';
-  }
+      std::cout << "Please write epidemic's parameter beta and gamma:\n";
+      double beta;
+      double gamma;
+      std::cin >> beta >> gamma;
 
-  graphic();
+      std::cout << "Please write the duration of the epidemic T:\n";
+      int T;
+      std::cin >> T;
+
+      Epidemic epidemic{beta, gamma, initial_population, T};*/
+
+  epidemic.graph();
 }
