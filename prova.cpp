@@ -9,8 +9,6 @@
 #include <random>
 #include <vector>
 
-// puoi cambiare i colori mettendo #define RED sf::Color::Red
-
 struct Population {
   long int S;
   long int I;
@@ -186,7 +184,7 @@ class Epidemic {
       VerticalLines.push_back(VerticalLine);
     }
 
-    // Curve --> sono giuste: non toccarle!
+    // Curve e puntini
     long int maxXValue = m_T + 1;
     long int maxYValue = N();
     std::vector<Population> population_state_ = evolve();
@@ -274,7 +272,7 @@ class Epidemic {
       people.push_back(ynumber);
     }
 
-    // legenda
+    // legenda:
 
     // righe colorate
     std::vector<sf::VertexArray> lines;
@@ -331,6 +329,7 @@ class Epidemic {
     desc3.setPosition(670.f, window.getSize().y - 50.f);
     description.push_back(desc3);
 
+    // disegnare tutto
     while (window.isOpen()) {
       sf::Event event;
       while (window.pollEvent(event)) {
@@ -388,17 +387,20 @@ class Epidemic {
     }
   };
 
+  // come gestire le celle ai bordi
   int wrapValue(int v, int vMax) {
     if (v == -1) return vMax - 1;
     if (v == vMax) return 0;
     return v;
   };
 
+  // probabilità di infettarsi date n celle infette attorno
   double probability(int n) {
     double result = 1 - std::pow((1 - m_beta), n);
     return result;
   };
 
+  // creazione dell'automa cellulare
   void automa_cellulare() {
     // creo finestra grafica
     sf::RenderWindow window(sf::VideoMode(1250, 1000), "Cellular Automaton");
@@ -423,10 +425,7 @@ class Epidemic {
     auto it = CellNumber.begin();
     auto last = CellNumber.end();
 
-    random_shuffle(
-        it,
-        last);  // così facendo le celle non cambiano posizione da un avvio
-                // all'altro, dati i parametri iniziali l'inizio sarà lo stesso
+    random_shuffle(it, last);
 
     for (int i = 0; i < N_cells; i++) {
       if (i < m_initial_population.S) {
@@ -441,6 +440,7 @@ class Epidemic {
       }
     }
 
+    // creo legenda
     sf::Font font;
     font.loadFromFile("graph/text/Arialn.ttf");
     sf::Text text;
@@ -453,19 +453,20 @@ class Epidemic {
     int ICounter = m_initial_population.I;
     int RCounter = m_initial_population.R;
     text.setString("Day = " + std::to_string(dayCounter) +
-                       "\n\nSusceptible = " + std::to_string(SCounter) +
-                       "\n\nInfected = " + std::to_string(ICounter) +
-                       "\n\nRemoved = " + std::to_string(RCounter));
+                   "\n\nSusceptible = " + std::to_string(SCounter) +
+                   "\n\nInfected = " + std::to_string(ICounter) +
+                   "\n\nRemoved = " + std::to_string(RCounter));
 
     sf::Clock clock;
 
     // disegna
     while (window.isOpen()) {
       sf::Event event;
+      // per chiudere la finestra col tasto x
       while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) window.close();
       }
-
+      // per tenere il conto delle variabili e stamparlo a schermo
       if (clock.getElapsedTime().asSeconds() > 1.0f) {
         clock.restart();
         dayCounter++;
@@ -499,7 +500,7 @@ class Epidemic {
                        "\n\nInfected = " + std::to_string(ICounter) +
                        "\n\nRemoved = " + std::to_string(RCounter));
       }
-
+      // per disegnare la schermata iniziale
       window.clear(sf::Color::White);
       for (int x = 0; x < Parts; x++) {
         for (int y = 0; y < Parts; y++) {
