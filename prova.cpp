@@ -1,14 +1,15 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Color.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <random>
 #include <iostream>
+#include <random>
 #include <vector>
-#include <algorithm>
-#include <iterator>
+
+// puoi cambiare i colori mettendo #define RED sf::Color::Red
 
 struct Population {
   long int S;
@@ -191,7 +192,7 @@ class Epidemic {
     std::vector<Population> population_state_ = evolve();
     std::vector<sf::VertexArray> Susceptible;
     std::vector<sf::VertexArray> Infected;
-    std::vector<sf::VertexArray> Recovery;
+    std::vector<sf::VertexArray> Removed;
     std::vector<sf::CircleShape> S_dots;
     std::vector<sf::CircleShape> I_dots;
     std::vector<sf::CircleShape> R_dots;
@@ -200,7 +201,7 @@ class Epidemic {
     for (int i = 0; i <= m_T; ++i) {
       sf::VertexArray SusceptibleCurve(sf::Lines, 2);
       sf::VertexArray InfectedCurve(sf::Lines, 2);
-      sf::VertexArray RecoveryCurve(sf::Lines, 2);
+      sf::VertexArray RemovedCurve(sf::Lines, 2);
       SusceptibleCurve[0].position =
           sf::Vector2f(80.f + xscale * i, -120.f + window.getSize().y -
                                               yscale * population_state_[i].S);
@@ -213,21 +214,21 @@ class Epidemic {
       InfectedCurve[1].position = sf::Vector2f(
           80.f + xscale * (i + 1),
           -120.f + window.getSize().y - yscale * population_state_[i + 1].I);
-      RecoveryCurve[0].position =
+      RemovedCurve[0].position =
           sf::Vector2f(80.f + xscale * i, -120.f + window.getSize().y -
                                               yscale * population_state_[i].R);
-      RecoveryCurve[1].position = sf::Vector2f(
+      RemovedCurve[1].position = sf::Vector2f(
           80.f + xscale * (i + 1),
           -120.f + window.getSize().y - yscale * population_state_[i + 1].R);
       SusceptibleCurve[0].color = sf::Color(0, 0, 255);
       SusceptibleCurve[1].color = sf::Color(0, 0, 255);
       InfectedCurve[0].color = sf::Color(230, 0, 0);
       InfectedCurve[1].color = sf::Color(230, 0, 0);
-      RecoveryCurve[0].color = sf::Color(20, 230, 0);
-      RecoveryCurve[1].color = sf::Color(20, 230, 0);
+      RemovedCurve[0].color = sf::Color(20, 230, 0);
+      RemovedCurve[1].color = sf::Color(20, 230, 0);
       Susceptible.push_back(SusceptibleCurve);
       Infected.push_back(InfectedCurve);
-      Recovery.push_back(RecoveryCurve);
+      Removed.push_back(RemovedCurve);
       sf::CircleShape Sdots(4.f);
       sf::CircleShape Idots(4.f);
       sf::CircleShape Rdots(4.f);
@@ -293,12 +294,12 @@ class Epidemic {
     InfectedLine[1].color = sf::Color(230, 0, 0);
     lines.push_back(InfectedLine);
 
-    sf::VertexArray RecoveryLine(sf::Lines, 2);
-    RecoveryLine[0].position = sf::Vector2f(600.f, window.getSize().y - 40.f);
-    RecoveryLine[1].position = sf::Vector2f(650.f, window.getSize().y - 40.f);
-    RecoveryLine[0].color = sf::Color(20, 230, 0);
-    RecoveryLine[1].color = sf::Color(20, 230, 0);
-    lines.push_back(RecoveryLine);
+    sf::VertexArray RemovedLine(sf::Lines, 2);
+    RemovedLine[0].position = sf::Vector2f(600.f, window.getSize().y - 40.f);
+    RemovedLine[1].position = sf::Vector2f(650.f, window.getSize().y - 40.f);
+    RemovedLine[0].color = sf::Color(20, 230, 0);
+    RemovedLine[1].color = sf::Color(20, 230, 0);
+    lines.push_back(RemovedLine);
 
     // puntini
     std::vector<sf::CircleShape> Dots;
@@ -325,7 +326,7 @@ class Epidemic {
     desc2.setFillColor(sf::Color::Black);
     desc2.setPosition(470.f, window.getSize().y - 50.f);
     description.push_back(desc2);
-    sf::Text desc3("Recovered", font, 20);
+    sf::Text desc3("Removed", font, 20);
     desc3.setFillColor(sf::Color::Black);
     desc3.setPosition(670.f, window.getSize().y - 50.f);
     description.push_back(desc3);
@@ -356,8 +357,8 @@ class Epidemic {
       for (const sf::VertexArray& InfectedCurve : Infected) {
         window.draw(InfectedCurve);
       }
-      for (const sf::VertexArray& RecoveryCurve : Recovery) {
-        window.draw(RecoveryCurve);
+      for (const sf::VertexArray& RemovedCurve : Removed) {
+        window.draw(RemovedCurve);
       }
       for (const sf::CircleShape& Sdots : S_dots) {
         window.draw(Sdots);
@@ -387,102 +388,193 @@ class Epidemic {
     }
   };
 
-/*
-std::vector <int> vector(){
-  std::vector<int> CellPosition;
-  srand(time(NULL));
-  for (int i = 0; i < N(); ++i) {
-    int CellNumber = rand() % N();
-    CellPosition.push_back(CellNumber);
-  }
-  return CellPosition;
-};*/
+  int wrapValue(int v, int vMax) {
+    if (v == -1) return vMax - 1;
+    if (v == vMax) return 0;
+    return v;
+  };
 
-  std::vector <int> vector(){
-
-  std::vector<int> CellPosition;
-  for (int i=0; i < 8; ++i){
-    CellPosition.push_back(i);
-  }
-
-random_shuffle(CellPosition.begin(), CellPosition.end());
-return CellPosition;
-  }
+  double probability(int n) {
+    double result = 1 - std::pow((1 - m_beta), n);
+    return result;
+  };
 
   void automa_cellulare() {
-  // creo finestra grafica
-  sf::RenderWindow window(sf::VideoMode(1000, 1000), "Cellular Automaton");
+    // creo finestra grafica
+    sf::RenderWindow window(sf::VideoMode(1250, 1000), "Cellular Automaton");
 
-  // creo griglia
-  int Parts = 1;
-  for (; Parts * Parts < N(); ++Parts) {
-  }
-
-  float CellLenght = window.getSize().x / Parts;
-  std::vector<sf::RectangleShape> Cells;
-  for (int i = 0; i < Parts; ++i) {
-    for (int a = 0; a < Parts; ++a) {
-      sf::RectangleShape cell(sf::Vector2f(CellLenght, CellLenght));
-      cell.setPosition(a * CellLenght + 4, i * CellLenght + 4);
-      cell.setFillColor(sf::Color::White);
-      cell.setOutlineThickness(2);
-      cell.setOutlineColor(sf::Color::Black);
-      Cells.push_back(cell);
-    }
-  }
-
-  // stato iniziale della popolazione
-  /*std::vector<int> CellPosition;
-  srand(time(NULL));
-  for (int i = 0; i < N(); ++i) {
-    int CellNumber = rand() % N();
-    CellPosition.push_back(CellNumber);
-  }*/
-
-  std::vector<int> CellPosition;
-  for (int i=0; i < Parts * Parts; ++i){
-    CellPosition.push_back(i);
-  }
-
-  auto it = CellPosition.begin();
-  auto last = CellPosition.end();
-random_shuffle(it, last); //così facendo le celle non cambiano posizione da un avvio all'altro, dati i parametri iniziali l'inizio sarà lo stesso
-
-  for (int S = 0; S < m_initial_population.S; ++S) {
-    Cells[CellPosition[S]].setFillColor(sf::Color::Blue);
-  }
-  for (int I = 0; I < m_initial_population.I; ++I) {
-    Cells[CellPosition[m_initial_population.S + I]].setFillColor(
-        sf::Color::Red);
-  }
-  for (int R = 0; R < m_initial_population.R; ++R) {
-    Cells[CellPosition[m_initial_population.S + m_initial_population.I + R]].setFillColor(
-        sf::Color::Green);
-  }
-
-  //evolve
-  
-
-//disegna
-  while (window.isOpen()) {
-    sf::Event event;
-    while (window.pollEvent(event)) {
-      if (event.type == sf::Event::Closed) window.close();
-    }
-    window.clear(sf::Color::White);
-
-    for (const sf::RectangleShape& cell : Cells) {
-      window.draw(cell);
+    // creo griglia
+    int Parts = 1;
+    for (; Parts * Parts < N(); ++Parts) {
     }
 
-    window.display();
-  }
-};
+    const int CellLenght =
+        (window.getSize().x - 258) / Parts;  // i margini sono spessi 4
+    const sf::Vector2f CELL_VECTOR(CellLenght, CellLenght);
+    const int N_cells = Parts * Parts;
+    int grid[N_cells] = {};
+    int gridNext[N_cells];
+
+    std::vector<int> CellNumber;  // III
+    for (int i = 0; i < N_cells; ++i) {
+      CellNumber.push_back(i);
+    }
+
+    auto it = CellNumber.begin();
+    auto last = CellNumber.end();
+
+    random_shuffle(
+        it,
+        last);  // così facendo le celle non cambiano posizione da un avvio
+                // all'altro, dati i parametri iniziali l'inizio sarà lo stesso
+
+    for (int i = 0; i < N_cells; i++) {
+      if (i < m_initial_population.S) {
+        grid[CellNumber[i]] = 0;
+      } else if (i < m_initial_population.S + m_initial_population.I) {
+        grid[CellNumber[i]] = 1;
+      } else if (i < m_initial_population.S + m_initial_population.I +
+                         m_initial_population.R) {
+        grid[CellNumber[i]] = 2;
+      } else {
+        grid[CellNumber[i]] = 3;
+      }
+    }
+
+    sf::Font font;
+    font.loadFromFile("graph/text/Arialn.ttf");
+    sf::Text text;
+    text.setFillColor(sf::Color::Black);
+    text.setPosition(window.getSize().x - 230, 40);
+    text.setFont(font);
+    text.setCharacterSize(30);
+    int dayCounter = 0;
+    int SCounter = m_initial_population.S;
+    int ICounter = m_initial_population.I;
+    int RCounter = m_initial_population.R;
+    text.setString("Day = " + std::to_string(dayCounter) +
+                       "\n\nSusceptible = " + std::to_string(SCounter) +
+                       "\n\nInfected = " + std::to_string(ICounter) +
+                       "\n\nRemoved = " + std::to_string(RCounter));
+
+    sf::Clock clock;
+
+    // disegna
+    while (window.isOpen()) {
+      sf::Event event;
+      while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) window.close();
+      }
+
+      if (clock.getElapsedTime().asSeconds() > 1.0f) {
+        clock.restart();
+        dayCounter++;
+        SCounter = 0;
+        for (int x = 0; x < Parts; x++) {
+          for (int y = 0; y < Parts; y++) {
+            if (grid[x + y * Parts] == 0) {
+              SCounter++;
+            }
+          }
+        }
+        ICounter = 0;
+        for (int x = 0; x < Parts; x++) {
+          for (int y = 0; y < Parts; y++) {
+            if (grid[x + y * Parts] == 1) {
+              ICounter++;
+            }
+          }
+        }
+        RCounter = 0;
+        for (int x = 0; x < Parts; x++) {
+          for (int y = 0; y < Parts; y++) {
+            if (grid[x + y * Parts] == 2) {
+              RCounter++;
+            }
+          }
+        }
+
+        text.setString("Day = " + std::to_string(dayCounter) +
+                       "\n\nSusceptible = " + std::to_string(SCounter) +
+                       "\n\nInfected = " + std::to_string(ICounter) +
+                       "\n\nRemoved = " + std::to_string(RCounter));
+      }
+
+      window.clear(sf::Color::White);
+      for (int x = 0; x < Parts; x++) {
+        for (int y = 0; y < Parts; y++) {
+          // draw cell
+          sf::RectangleShape cell;
+          cell.setPosition(x * CellLenght + 5, y * CellLenght + 5);
+          cell.setSize(CELL_VECTOR);
+          cell.setOutlineThickness(2);
+          cell.setOutlineColor(sf::Color::Black);
+          if (grid[x + y * Parts] == 0) {
+            cell.setFillColor(sf::Color::Blue);
+          } else if (grid[x + y * Parts] == 1) {
+            cell.setFillColor(sf::Color::Red);
+          } else if (grid[x + y * Parts] == 2) {
+            cell.setFillColor(sf::Color::Green);
+          } else if (grid[x + y * Parts] == 3) {
+            cell.setFillColor(sf::Color::White);
+          }
+
+          window.draw(cell);
+
+          // prepare gridNext
+          int neighborSum = 0;
+
+          int current = x + y * Parts;
+          gridNext[current] = grid[current];
+          srand(time(NULL));
+          if (grid[current] == 0) {
+            for (int i = -1; i < 2; i++) {
+              for (int j = -1; j < 2; j++) {
+                int xi = wrapValue(x + i, Parts);
+                int yj = wrapValue(y + j, Parts);
+                if (grid[xi + yj * Parts] == 2) {
+                  grid[xi + yj * Parts] = 0;
+                  neighborSum += grid[xi + yj * Parts];
+                  grid[xi + yj * Parts] = 2;
+                } else if (grid[xi + yj * Parts] == 3) {
+                  grid[xi + yj * Parts] = 0;
+                  neighborSum += grid[xi + yj * Parts];
+                  grid[xi + yj * Parts] = 3;
+                } else {
+                  neighborSum += grid[xi + yj * Parts];
+                }
+              }
+            }
+            int probNumber = rand() % 100;  // perchè non rialcola una nuova
+                                            // probabilità ad ogni passaggio?
+            double prob = probability(neighborSum);
+            if (probNumber < prob * 100) {
+              gridNext[current] = 1;
+            }
+          } else if (grid[current] == 1) {
+            int probNumber = rand() % 100;
+            if (probNumber < m_gamma * 100) {
+              gridNext[current] = 2;
+            }
+          }
+        }
+      }
+
+      // move gridNext to grid
+      for (int i = 0; i < N_cells; i++) {
+        grid[i] = gridNext[i];
+      }
+
+      window.draw(text);
+
+      window.display();
+    }
+  };
 };
 
 int main() {
-  Population initial_population{55, 49, 8};
-  Epidemic epidemic{0.8, 0.4, initial_population, 25};
+  Population initial_population{58, 17, 8};
+  Epidemic epidemic{0.25, 0.15, initial_population, 25};
   /*
         std::cout << "Please write initial population's groups S, I, R:\n";
         Population initial_population;
@@ -510,13 +602,12 @@ int main() {
                 << '\n';}*/
 
   // epidemic.graph();
-
-  std::vector <int> vec = epidemic.vector();
-  std::cout << vec.size() << "\n\n";
-  for (int i=0; i<vec.size(); ++i){
-    std::cout << vec[i] << '\n';
-  }
-
+  /*
+    std::vector<int> vec = epidemic.vector();
+    std::cout << vec.size() << "\n\n";
+    for (int i = 0; i < vec.size(); ++i) {
+      std::cout << vec[i] << '\n';
+    }*/
 
   epidemic.automa_cellulare();
 }
