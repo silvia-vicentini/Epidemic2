@@ -21,10 +21,14 @@ int main() {
 
   std::vector<pf::Population> population_state_ = epidemic.evolve();
   std::cout << "Report for each of the stored states of population:\n";
-  std::cout << "Day  S    I   R \n";
+std::cout << std::setw(12) << std::left << "Day :" << std::setw(12) << std::left
+            << "S :" << std::setw(12) << std::left << "I :" << std::setw(6)
+            << std::left << "R :" << '\n';
   for (int i = 0; i <= T; ++i) {
-    std::cout << i << "  " << population_state_[i].S << "  "
-              << population_state_[i].I << "  " << population_state_[i].R
-              << '\n';
+    std::cout << std::setw(12) << std::left << i << std::setw(12) << std::left
+              << population_state_[i].S << std::setw(12) << std::left
+              << population_state_[i].I << std::setw(6) << std::left
+              << population_state_[i].R << '\n';
+            }*/
   }
 }
