@@ -29,6 +29,6 @@ std::cout << std::setw(12) << std::left << "Day :" << std::setw(12) << std::left
               << population_state_[i].S << std::setw(12) << std::left
               << population_state_[i].I << std::setw(6) << std::left
               << population_state_[i].R << '\n';
-            }*/
+            }
   }
 }
