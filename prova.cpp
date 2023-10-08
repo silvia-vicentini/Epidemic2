@@ -8,6 +8,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <iomanip>
 
 struct Population {
   long int S;
