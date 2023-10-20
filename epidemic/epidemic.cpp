@@ -19,7 +19,7 @@ Epidemic::Epidemic(double beta, double gamma,
   assert(initial_population_.S >= 0);
   assert(initial_population_.I >= 0);
   assert(initial_population_.R >= 0);
-  assert(T_ > 0);
+  assert(T_ > 0 && T_ <= 2147483647);
 
   std::vector<Population<double>> simulation_double_ = Epidemic::store();
 }
